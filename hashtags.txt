@@ -1,5 +1,0 @@
-#travel
-#tourist
-#vacation
-#trip
-#holiday
