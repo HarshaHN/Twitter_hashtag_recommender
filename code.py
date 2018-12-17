@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[46]:
+# In[116]:
 
 
 #Data Cleansing part 1
@@ -20,11 +20,6 @@ import numpy as np
 from collections import Counter, defaultdict
 from nltk import FreqDist
 from nltk.corpus import stopwords
-#import matplotlib.pyplot as plt
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import accuracy_score
-#from sklearn.metrics import precision_recall_fscore_support as score
 #from spacy.lemmatizer import Lemmatizer as lemma
 #from spacy.lang.en import LEMMA_INDEX, LEMMA_EXC, LEMMA_RULES
 #from nltk.tokenize import word_tokenize
@@ -69,7 +64,7 @@ for file in Files:
 print("Checkpoint 1 completed in ", time.time() - start);
 
 
-# In[47]:
+# In[117]:
 
 
 #Data Cleansing part 2
@@ -103,7 +98,7 @@ for file in out:
 print("Checkpoint 2 completed in ", time.time() - start);
 
 
-# In[48]:
+# In[118]:
 
 
 #Data segregation
@@ -128,7 +123,8 @@ for file in tweets:
                     flag = np.random.choice([0, 1], 1, p=[0.75, 0.25])
                     if flag == 1:
                         #Test data: Dict = {Hashtag: Tweets}
-                        testHT[tag].append(re.sub('#' , '', line))
+                        line = " ".join(filter(lambda x:x[0]!='#', line.split()))
+                        testHT[tag].append(line)
                     else: 
                         # Train set: Dict = {Hashtag: Tweets}
                         trainHT[tag].append(re.sub('#' , '', line)) # {Hashtag: [T1, T2, T3]}
@@ -137,7 +133,7 @@ for file in tweets:
 print("Checkpoint 3 completed in ", time.time() - start);
 
 
-# In[49]:
+# In[154]:
 
 
 
@@ -198,20 +194,18 @@ def computeTFIDF(tfhashtxt, idfs):
 tfidfBow = {}; topfivewords = {}
 for hashtag in HT.keys():
     tfidfBow[hashtag] = computeTFIDF(tf[hashtag], idfs)
-    topfivewords[hashtag] = dict(Counter(tfidfBow[hashtag]).most_common(25))
+    topfivewords[hashtag] = dict(Counter(tfidfBow[hashtag]).most_common(100))
 
 tfidf = {}
 for hashtag, rankwords in topfivewords.items():
     tfidf[hashtag] = rankwords.keys()
-
-tfidfpd = pd.DataFrame.from_dict(tfidf, orient='index');
-print(tfidfpd)
+        
 
 print("Checkpoint 4 completed in ", time.time() - start);
     
 
 
-# In[50]:
+# In[155]:
 
 
 #Vectors set
@@ -285,12 +279,12 @@ print('Test data created',elapsed_time)
 print("Checkpoint 5 completed in ", time.time() - start); print("Vector set created --> Success!!!");
 
 
-# In[58]:
+# In[156]:
 
 
 import numpy as np
 import pickle
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import accuracy_score
@@ -316,28 +310,60 @@ for j in range(len(test)):
 testY = np.array(testY)
 
 #Logistic regression.
-logreg = LogisticRegression( C=1e1, solver='lbfgs', multi_class='multinomial')
+logreg = LogisticRegression( C=1e1, solver='lbfgs', multi_class='multinomial', max_iter = 3000)
 
 # Create an instance of Logistic Regression Classifier and fit the data.
 logreg.fit(trainX, trainY)
 PredY = logreg.predict(testX)
 
-print(confusion_matrix(testY, PredY))
-
 accuracy = accuracy_score(testY, PredY)
 print('Accuracy: ', accuracy)
 
-precision, recall, fscore, support = score(testY, PredY)
-print('precision: {}'.format(precision))
-print('recall: {}'.format(recall))
-print('fscore: {}'.format(fscore))
-print('support: {}'.format(support))
+#print(confusion_matrix(testY, PredY))
+#precision, recall, fscore, support = score(testY, PredY)
+#print('precision: {}'.format(precision))
+#print('recall: {}'.format(recall))
+#print('fscore: {}'.format(fscore))
+#print('support: {}'.format(support))
 
 print("Checkpoint 6 completed in ", time.time() - start);  print("Task complete -- > Success!!!");
+
+
+# In[161]:
+
+
+import matplotlib.pyplot as plt
+Featuresize = [5, 25, 50, 100]
+Accuracy = [44.11, 69.32, 69.45, 69.91]
+
+plt.plot(Featuresize, Accuracy, 'ro')
+plt.axis([0, 120, 40, 100])
+plt.grid(True)
+plt.title('Num of features vs Accuracy for 3000 iterations with 0.1 regularization.')
+plt.xlabel('Feature size')
+plt.ylabel('Accuracy in %')
+plt.savefig('FvsA.png', bbox_inches='tight')
+
+
+# In[166]:
+
+
+# Confusion matrix
+mat = confusion_matrix(testY, PredY)
+pd.DataFrame(mat, columns=["wallstreet","winter", "christmas", "cricket", "scubadive", "brexit" ], index = ["wallstreet","winter", "christmas", "cricket", "scubadive", "brexit" ])
+
+
+# In[192]:
+
+
+# Performance metric
+score = [list(precision), list(recall), list(fscore), list(support)]; rows = ['precision', 'recall', 'fscore', 'support'];
+pd.DataFrame(score,columns=["wallstreet","winter", "christmas", "cricket", "scubadive", "brexit"], index = ['precision', 'recall', 'fscore', 'support'] )
 
 
 # In[ ]:
 
 
-
+#TF-IDF top rank words
+#print(tfidfpd) # <--uncomment
 
